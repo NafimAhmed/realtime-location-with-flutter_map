@@ -68,6 +68,9 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
   /// ➕ Route points: amar location theke destination porjonto (road-follow)
   List<LatLng> _routePoints = [];
 
+  /// ➕ Live movement trail: ami jekhane jekhane gesi oitar line
+  List<LatLng> _myTrail = [];
+
   @override
   void initState() {
     super.initState();
@@ -215,6 +218,7 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
         _myLocation = current;
         _center = current;
         _zoom = 16;
+        _myTrail = [current]; // trail start from current point
       });
       _mapController.move(current, _zoom);
 
@@ -237,6 +241,7 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
               if (!mounted) return;
               setState(() {
                 _myLocation = curr;
+                _myTrail.add(curr); // 🔁 live movement trail e add
               });
 
               // ✅ realtime move holeo route পুনরায় হিসাব
@@ -343,7 +348,7 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
 
       // keyboard hide
       if (mounted) {
-        FocusScope.of(context).unfocus();
+        // FocusScope.of(context).unfocus();
       }
 
       // map camera move
@@ -474,7 +479,19 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
                 userAgentPackageName: 'com.example.realtime_location',
               ),
 
-              /// ✅ ROAD ROUTE LAYER (OSRM theke asha points)
+              /// 🟢 LIVE TRAIL LAYER (tui jekhane jekhane gesis)
+              if (_myTrail.length > 1)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _myTrail,
+                      strokeWidth: 3,
+                      color: Colors.green.withOpacity(0.7),
+                    ),
+                  ],
+                ),
+
+              /// 🔵 ROAD ROUTE LAYER (OSRM theke asha points)
               if (_routePoints.isNotEmpty)
                 PolylineLayer(
                   polylines: [
@@ -503,6 +520,11 @@ class _RealtimeSearchMapPageState extends State<RealtimeSearchMapPage> {
                   elevation: 4,
                   borderRadius: BorderRadius.circular(12),
                   child: TextField(
+                    onChanged: (data){
+
+                      _searchLocation();
+
+                    },
                     controller: _searchController,
                     textInputAction: TextInputAction.search,
                     onSubmitted: (_) => _searchLocation(),
